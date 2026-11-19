@@ -1,0 +1,2 @@
+# Keep shell scripts runnable on every OS (Git Bash on Windows breaks on CRLF).
+*.sh text eol=lf
