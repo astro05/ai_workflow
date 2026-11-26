@@ -5,7 +5,7 @@ description: First run of the .ai kit in a repo. Fills .ai/project/ and .ai/kb.c
 
 # Skill: init-project
 
-**Use when:** `.ai/project/overview.md` still has `<placeholders>`, `$KB/<INDEX>` is missing, or it has no spec rows. Run it once per repo.
+**Use when:** `.ai/project/overview.md` still has `<placeholders>`, `$KB/<INDEX>` is missing, its *Project paths* still say `TBD`, or it has no spec rows. Run it once per repo; on a re-run, do only the steps still needed.
 If the KB itself is missing, stop and ask the human to provide it (a KB is created from the KB kit, never inside this repo).
 
 ## Steps
@@ -22,13 +22,13 @@ If the KB itself is missing, stop and ask the human to provide it (a KB is creat
    - Record the team's branch convention in `commit-conventions.md` → *Branches* (ask if not documented).
 3. **Fill `.ai/kb.conf`:** `KB` (path to the KB relative to the repo root) and `LAYER`. Make sure the KB path in `CLAUDE.md` matches.
 4. **Check the layer in the KB.** `$KB/_kb/kb.conf` must have a row for `LAYER` (folder, prefix, index, repo, consumes). If it doesn't, **stop** and ask the human to add it: `_kb/` is human-owned. Read the row: it gives `<Layer>`, `<PREFIX>`, `<INDEX>` and `Consumes`.
-5. **Create the index** if `$KB/<INDEX>` is missing:
+5. **The index.** If `$KB/<INDEX>` is missing (usually `init-kb` has already created it), create it from the KB's template and replace the layer and repo names:
    ```bash
    . .ai/kb.conf; KB="${SDD_KB:-$KB}"
-   cp .ai/templates/spec-index-template.md "$KB/<INDEX>"
+   cp "$KB/_kb/templates/spec-index-template.md" "$KB/<INDEX>"
    ```
-   Replace the title's layer name, and fill **Project paths** with what you found in step 1 (source root, tests root, test tag, test / lint / build commands).
-6. **Module folders.** Every module from step 1 needs `$KB/<Module>/{SRS,Planning,Implementation/<Layer>}/` (each empty folder with a `.gitkeep`) and a row in `$KB/MODULE-MAP.md` → *Modules*. Create what is missing; never rename existing module folders (ask if names differ).
+   **In either case**, fill its **Project paths** table with what you found in step 1 (source root, tests root, test tag, test / lint / build commands), replacing every `TBD`. Leave a row `TBD` only if you could not verify it, and list it in your report.
+6. **Module folders.** Every module from step 1 needs `$KB/<Module>/{PRD,Planning,Implementation/<Layer>}/` (each empty folder with a `.gitkeep`) and a row in `$KB/MODULE-MAP.md` → *Modules*. Create what is missing; never rename existing module folders (ask if names differ).
 7. **Draft the baseline spec with the `new-spec` skill:** folder `$KB/_cross-cutting/Implementation/<Layer>/001-core-system/`, ID `<PREFIX>-001`, `Requirements: none`, registered in `$KB/MODULE-MAP.md` → *Specs without a requirement*.
    - **New project:** the system baseline. Leave the product vision and tech stack as §1.4 Open Questions.
    - **Existing project:** describe the system *as it is today*, not as it should be. Document the current architecture in §2 (map the real layers onto rule 01's generic layers), list the main modules with their existing paths in §2.1, and cite `.ai/project/` for the existing stack choices in §2.4.

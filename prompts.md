@@ -6,10 +6,10 @@ Project: <Project Name>
 Goal: <what you are building>
 Users: <target users>
 Constraints: <performance, security, cost, etc.>
-Tech Stack: .NET 10, EF Core, PostgreSQL, Angular 17+
-Architecture: 
--Backend: Clean Architecture
--Frontend: Standalone Components + Reactive Forms
+Tech Stack: <e.g. .NET 10, EF Core, PostgreSQL, Angular 17+>
+Architecture:
+-Backend: <e.g. Clean Architecture>
+-Frontend: <e.g. Standalone Components + Reactive Forms>
 
 
 [TASK]

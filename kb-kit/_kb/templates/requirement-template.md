@@ -1,8 +1,8 @@
 # REQ-<Module>-NNN: <Title>
 
 <!--
-The README.md of one requirement folder: <Module>/SRS/NNN-slug/README.md.
-The requirement documents themselves (CR, SRS, meeting notes, mock-ups) sit next to this file, unchanged.
+The README.md of one requirement folder: <Module>/PRD/NNN-slug/README.md.
+The requirement documents themselves (CR, PRD, meeting notes, mock-ups) sit next to this file, unchanged.
 Created by the plan-requirement skill (KB) or intake-requirement (repo). Agents fill the metadata and the Documents table; they never edit the requirement documents.
 Trace status lives in MODULE-MAP.md, not here.
 -->

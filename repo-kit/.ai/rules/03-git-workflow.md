@@ -17,13 +17,14 @@ Refs: SPEC-Billing-002 AC-02, AC-03
 ```
 
 - Every `feat` or `fix` commit that implements spec'd behavior has a `Refs:` footer naming the spec and ACs.
-- Specs are not in this repo: they live in `$KB`, which is its own git repo. Commits there use type `docs` with a scope for the kind of change: `docs(srs)`, `docs(plan)`, `docs(specs)`, `docs(map)`, `docs(memory)`, e.g. `docs(specs): draft SPEC-Billing-002 for invoice export`. Never mix KB and code changes in one commit.
+- Specs are not in this repo: they live in `$KB`, which is its own git repo. Commits there use type `docs` with a scope for the kind of change: `docs(prd)`, `docs(plan)`, `docs(specs)`, `docs(map)`, `docs(memory)`, e.g. `docs(specs): draft SPEC-Billing-002 for invoice export`. Never mix KB and code changes in one commit.
 - A breaking §3 contract change uses `!` and/or a `BREAKING CHANGE:` footer with migration notes.
+- A bug-fix commit body names the confirmed root cause (`.ai/skills/fix-bug`).
 - Commit only when the human asks.
 
 ## Pull requests
 1. **Plan and spec first.** A behavior change starts with its plan and spec change in `$KB`, reviewed and set to `Status: Approved` by a human, **then** the implementation. Small amendments may go together with the code only if the spec diff is reviewed first.
-2. Each PR description includes: the owning spec(s) with their version, ACs covered, test evidence, and a "Spec drift: none / described" line. (Whether requirement IDs appear too is a team choice; check `$KB/.ai/memory/`.)
+2. Each PR description includes: the owning spec(s) with their version and ACs covered, a "Spec drift: none / described" line, a short sketch of the change (call flow, file tree or diagram, whichever is smallest), before/after evidence (test output, or screenshots for UI), and the risk: whether it can be rolled back (a breaking §3 change or destructive migration cannot) and what it could affect. (Whether requirement IDs appear too is a team choice; check `$KB/.ai/memory/`.)
 3. CI must pass. Run the Definition of Done (rule 02) locally before opening the PR.
 4. Changes to auth, secrets, PII, or input parsing need a `security-auditor` review.
 5. Merging is done by humans.

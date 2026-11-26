@@ -18,9 +18,9 @@ description: First run of a new knowledge base (or after a layer was added to _k
    - prefixes are unique, a `consumes` value names another layer listed **above** it.
 2. **Spec indexes.** For each layer whose `index` file is missing, create it from `_kb/templates/spec-index-template.md` (title, layer, repo name, folder). Leave *Project paths* as `TBD`; the repo's `init-project` fills it.
 3. **Modules.** Get the module list from the human or from the provider repo's structure (`$REPO/.ai/project/architecture.md`: the business modules / bounded contexts / solution folders). Don't invent modules. For each module, create
-   `<Module>/SRS/`, `<Module>/Planning/` and `<Module>/Implementation/<Layer>/` for every layer, each with a `.gitkeep`, and add a row to `MODULE-MAP.md` → *Modules* (one spec column per layer). Do the same for `_cross-cutting/` if a layer folder is missing there.
+   `<Module>/PRD/`, `<Module>/Planning/` and `<Module>/Implementation/<Layer>/` for every layer, each with a `.gitkeep`, and add a row to `MODULE-MAP.md` → *Modules* (one spec column per layer). Do the same for `_cross-cutting/` if a layer folder is missing there.
 4. **Map columns.** If the layers differ from the default (backend, frontend), make the spec columns in `MODULE-MAP.md` → *Modules* and *Traceability* match them, one per layer in `_kb/kb.conf` order.
-5. **Module list in README.** Fill `README.md` → *Modules* and the project name placeholders.
+5. **Module list in README and GLOSSARY.** Fill `README.md` → *Modules* and the project name placeholders; give `GLOSSARY.md` one heading per module (no terms yet: terms are added as plans settle them). If a repo already has a `GLOSSARY.md`, `CONTEXT.md` or domain docs, tell the human, and offer to move its terms here.
 6. **Tool access.** In Claude Code, `.claude/settings.json` → `permissions.additionalDirectories` must list every repo path. That file is human-owned: if it is wrong, show the human the exact change.
 7. **Validate:** `bash _kb/scripts/validate-kb.sh` exits 0.
 8. **Report:** layers and repos found (and problems), files and folders created, what the human must still do (fix `kb.conf`, settings, install the repo kit, run `init-project` in each repo so it fills *Project paths* and drafts its baseline spec). **Don't change any code.**

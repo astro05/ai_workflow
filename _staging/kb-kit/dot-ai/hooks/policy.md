@@ -29,7 +29,7 @@ What AI agents may **not** do in this knowledge base (and in the product repos w
    | Spec rules | Follow them yourself. Run `bash _kb/scripts/validate-kb.sh` before finishing. |
 
 2. **Use only settings you have verified** in your tool's current docs or its existing config files. If you're unsure a key exists, don't write it; tell the human (no phantom APIs).
-   Claude Code ships ready-made: `.claude/settings.json` (permissions, `additionalDirectories` for the repos) and `.claude/hooks/policy-guard.ps1`, a PreToolUse hook that parses this file at runtime and enforces every section except *Spec rules*.
+   Claude Code ships ready-made: `.claude/settings.json` (permissions, `additionalDirectories` for the repos) and `.claude/hooks/policy-guard.ps1`, a PreToolUse hook that parses this file at runtime and enforces every section except *Spec rules*. Reads of *Files: deny read* are blocked by the native `Read(...)` rules in `.claude/settings.json` (the hook skips reads to keep them fast): keep those rules in step with that section.
 3. **Write project-level config only, never global user config.** Show the human the exact diff and wait for approval before writing it. Never loosen existing settings that are stricter than this policy.
 4. **Report coverage** to the human: one row per section, saying whether it is enforced by the tool, partially enforced (and how), or followed manually.
 
@@ -49,6 +49,10 @@ Commands an agent must never run. A human runs them.
 - **infra-destroy** — ``\b(terraform\s+(destroy|apply\b[^;&|]*-destroy)|pulumi\s+destroy|kubectl\s+delete|helm\s+(uninstall|delete)|docker\s+(system|volume)\s+prune|docker\s+volume\s+rm|docker[\s-]+compose\b[^;&|]*\bdown\b[^;&|]*\s-v)\b`` — Destroying infrastructure or volumes is human-only.
 - **publish-deploy** — ``\b((npm|pnpm|yarn)\s+publish|cargo\s+publish|twine\s+upload|dotnet\s+nuget\s+push|gh\s+release\s+create|gh\s+pr\s+merge|fly(ctl)?\s+deploy)\b|\b(vercel|netlify)\b[^;&|]*--prod\b`` — Publishing, merging, or deploying is human-only.
 - **rm-root** — ``\brm\s+(-\w+\s+)*-\w*r\w*\s+(-\w+\s+)*["']?(/|~|\$HOME|\.\.?)["']?(\s|$|/\*?(\s|$))`` — Recursive delete of /, ~, . or .. is banned.
+- **rm-root-ps** — ``\b(Remove-Item|rm|del|rd|rmdir)\b(?=[^;&|]*\s-r)[^;&|]*\s["']?(/|~|\$HOME|\$env:USERPROFILE|\.\.?|[A-Za-z]:[\\/]?)["']?(\s|$)`` — Recursive delete of a drive root, home, . or .. is banned (PowerShell / cmd).
+- **shell-write-protected** — ``(\b(rm|del|rmdir|Remove-Item|tee|truncate|Set-Content|Add-Content|Out-File|Clear-Content|New-Item)\b|\bsed\s+-i|\bperl\s+-p?i|>)[^;&|]*(\b_kb[/\\]|\.ai[/\\]hooks\b|\.claude[/\\](settings(\.local)?\.json|hooks\b)|\.gemini[/\\]settings\.json|\.cursor[/\\]|\.codex[/\\]|\bopencode\.json)`` — Writing or deleting a protected file through the shell (Files: protect). A human edits it.
+- **shell-copy-into-protected** — ``\b(cp|mv|Copy-Item|Move-Item|ln)\b[^;&|]*\s["']?[^\s;&|"']*(\b_kb[/\\]|\.ai[/\\]hooks\b|\.claude[/\\](settings(\.local)?\.json|hooks\b)|\.gemini[/\\]settings\.json|\.cursor[/\\]|\.codex[/\\]|\bopencode\.json)[^\s;&|"']*["']?[ \t]*($|[;&|\r\n])`` — Copying or moving a file onto a protected path (Files: protect). A human does it.
+- **shell-edit-requirements** — ``(\b(rm|del|rmdir|Remove-Item|tee|truncate|Set-Content|Add-Content|Out-File|Clear-Content)\b|\bsed\s+-i|\bperl\s+-p?i|>)[^;&|]*[\s"'/\\]PRD[/\\](?!\.gitkeep\b|[^\s/\\"']+[/\\]README\.md\b)`` — Requirement documents are read-only. Filing moves them unchanged (`mv`); nothing else touches them.
 - **secrets-read** — ``\b(cat|type|less|more|head|tail|bat|Get-Content|gc)\b[^;&|]*\.env(?!\.(example|sample|template))\b`` — Agents never read secrets files.
 - **pipe-to-shell** — ``\b(curl|wget|iwr|Invoke-WebRequest)\b[^;&]*\|\s*(sudo\s+)?(ba|z)?sh\b|\|\s*iex\b`` — Piping remote scripts into a shell is banned.
 - **sudo** — ``(^|[;&|]\s*)sudo\b`` — No privilege escalation. Ask the human to run it.
@@ -64,10 +68,12 @@ Commands that need a human's approval each time. Tools that can't prompt for app
 
 Agents may read these but never create, edit, move, or delete them. The single exception is writing your tool's settings during *Applying this policy*, after the human approves the diff.
 
-Requirement documents are input from the business (rule 00). Each requirement folder's `README.md` is written by intake and is the only exception. Policies, validator and tool settings of this folder and of the repos (reached as absolute paths) are human-only. Only tool **settings** are protected, not the tools' per-user memory folders.
+Requirement documents are input from the business (rule 00). Two exceptions, both done by intake (`plan-requirement`, a repo's `intake-requirement`): writing each requirement folder's `README.md`, and **filing**: moving a loose document, unchanged and with its name, from `<Module>/PRD/` into a new `<Module>/PRD/NNN-slug/` folder (with `mv` / `git mv`), and removing `<Module>/PRD/.gitkeep`. Policies, validator and tool settings of this folder and of the repos (reached as absolute paths) are human-only. Only tool **settings** are protected, not the tools' per-user memory folders.
 
-- `*/SRS/**`
-- `!*/SRS/*/README.md`
+The shell rules *shell-write-protected*, *shell-copy-into-protected* and *shell-edit-requirements* apply the same protection to shell commands. They are a best-effort pattern match, not a sandbox: CI and branch protection are the backstop (`README.md`).
+
+- `*/PRD/**`
+- `!*/PRD/*/README.md`
 - `_kb/**`
 - `**/.ai/hooks/**`
 - `**/.claude/settings.json`

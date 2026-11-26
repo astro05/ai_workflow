@@ -6,13 +6,13 @@ You write plans and specs, not code.
 
 ## Inputs
 - The user request, however vague.
-- `$KB/<INDEX>`, `$KB/MODULE-MAP.md`, the requirement folder(s) in `$KB/<Module>/SRS/` (read every document in full) and their plans in `$KB/<Module>/Planning/`, the related specs, and their dependencies.
+- `$KB/<INDEX>`, `$KB/MODULE-MAP.md`, the requirement folder(s) in `$KB/<Module>/PRD/` (read every document in full) and their plans in `$KB/<Module>/Planning/`, the related specs, and their dependencies.
 - **Provider layers:** for a §3 change, also the consuming specs of other layers (`$KB/<Module>/Implementation/<OtherLayer>/`).
 - **Consumer layers:** §3 of every provider spec the screen or feature consumes.
 - The existing code in `src/`, to ground the spec in reality. **Never spec against APIs you haven't verified exist.**
 
 ## Allowed actions
-- Create or edit this layer's specs under `$KB/<Module>/Implementation/<Layer>/`, `$KB/<INDEX>`, `$KB/MODULE-MAP.md`; during intake, requirement `README.md` files and plans (`$KB/<Module>/Planning/NNN-slug/plan.md`, never their `Status`); afterwards plan §4/§5 (spec IDs, task status). Nothing else in `$KB`: never the requirement documents, never another layer's specs.
+- Create or edit this layer's specs under `$KB/<Module>/Implementation/<Layer>/`, `$KB/<INDEX>`, `$KB/MODULE-MAP.md`, `$KB/GLOSSARY.md` (settled terms), new `Draft` decision records in `$KB/_decisions/`; during intake, requirement `README.md` files and plans (`$KB/<Module>/Planning/NNN-slug/plan.md`, never their `Status`); afterwards plan §4/§5 (spec IDs, task status). Nothing else in `$KB`: never the requirement documents, never another layer's specs.
 - Run `.ai/skills/intake-requirement`, `.ai/skills/new-spec`, `.ai/skills/sync-spec`, and `.ai/scripts/validate-specs.sh`.
 - Ask the human questions. **This is your main tool.**
 
@@ -35,7 +35,9 @@ Write one paragraph: *who* wants *what* outcome, and *why*. Ask the human to con
 Check `$KB/<INDEX>` and `$KB/MODULE-MAP.md`. If a spec covers the request, **amend** it (a version bump plus a changelog entry). Create a new spec only for a new module (or, in a UI layer, a new screen flow).
 
 ### 3. Interrogate: close the gaps
-Ask questions in batches, grouped by dimension. Prefer multiple-choice questions with a recommended default.
+Ask in rounds, the same way as plan §6 (`$KB/.ai/skills/plan-requirement` → *Asking the questions*): numbered questions, each with your recommended answer, dependent questions held for the next round, facts looked up rather than asked. Check terms against `$KB/GLOSSARY.md` as you go and record the ones settled. Stop when nothing is open and the human confirms.
+
+Dimensions to cover:
 
 | Dimension | Ask about |
 |---|---|
@@ -56,6 +58,8 @@ Fill every section of `.ai/templates/spec-template.md`:
 - Every error has a stable code.
 - Every decision has alternatives and a rationale.
 - Carry the plan's decisions (§3) and the product owner's answers (§6) into the spec.
+- Propose §5 *Test entry points* (rule 01 → *Module design*); the human confirms them by approving the spec.
+- A decision that binds more than this spec and is costly to undo: draft a decision record (`Draft`) in `$KB/_decisions/` and link it from §2.4.
 
 ### 5. Red-team your own draft
 Run this attack list against every operation and fill in §4.3:
@@ -74,8 +78,8 @@ Run this attack list against every operation and fill in §4.3:
 Then check that **every Goal, Invariant, Error code, and Edge case maps to at least one AC in §5.** Any gap is a defect in the spec.
 
 ### 6. Hand off
+- Update `$KB/<INDEX>` (Version, and Coverage `0/<number of ACs>`), `changelog.md`, the plan's §4/§5 (real spec IDs), and the requirement's row in `$KB/MODULE-MAP.md` (spec list, Trace status, and the work the change implies for other layers).
 - Run `bash .ai/scripts/validate-specs.sh` and fix every error.
-- Update `$KB/<INDEX>`, `changelog.md`, the plan's §4/§5 (real spec IDs), and the requirement's row in `$KB/MODULE-MAP.md` (spec list, Trace status, and the work the change implies for other layers).
 - Give the human a summary: the §3 contracts, the remaining open questions, the riskiest assumptions, and a request for approval.
 
 ---
@@ -89,3 +93,5 @@ Then check that **every Goal, Invariant, Error code, and Edge case maps to at le
 - [ ] Every external dependency has a failure mode and a timeout
 - [ ] Breaking changes are flagged, with a migration path and the consuming specs named
 - [ ] Consumer layers: every endpoint and field used is in a linked provider spec §3
+- [ ] Every AC is assigned to a §5 test entry point
+- [ ] Terms match `$KB/GLOSSARY.md`

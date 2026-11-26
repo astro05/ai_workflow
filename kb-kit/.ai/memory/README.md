@@ -28,7 +28,7 @@ added: YYYY-MM-DD
 
 File name prefix by type: `fix-` (a mistake and its correct form), `convention-` (naming, structure, style), `pattern-` (a preferred way to build something), `rule-` (how agents should work). Add a short layer tag for layer-specific entries, e.g. `fix-be-ef-migrations.md`, `convention-fe-signal-inputs.md`.
 
-Entries rank as standing human instructions (`.ai/ai.md` §6): above the repos' rules, below their `.ai/project/` and the policies. A repo's `.ai/project/` document that states a convention wins over an entry.
+Entries rank as standing human instructions (`.ai/ai.md` §6), but because agents write them they rank **below** the policies and every rule 00: above the repos' rules 01–03, below their `.ai/project/`. An entry never relaxes a gate, an approval, the traceability or a ban; when a human asks for that, tell them it is a change to rule 00 or the policy, which a human edits. A repo's `.ai/project/` document that states a convention wins over an entry.
 
 ## Index
 

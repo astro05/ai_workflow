@@ -24,6 +24,17 @@ For a UI layer the same idea holds: components (interfaces) → state / services
 - A new cross-module dependency must be listed in the spec's `Dependencies` and in `$KB/<INDEX>`.
 - **Consumer layers:** the boundary to the provider layer is its §3 contract. Calls go through one service/client per feature, never scattered across components.
 
+## Module design
+
+- **Small surface, rich behaviour.** A module's public surface (types, error codes, invariants, required config) should be much smaller than what it does. A class or service that only forwards calls adds surface without behaviour: fold it into its caller or callee.
+- **Test through public entry points.** A spec's §5 *Test entry points* names the few entry points (endpoint, use case, component) its ACs are tested through. If a behaviour can only be tested by reaching inside, the module boundary is in the wrong place: raise it with the human.
+- **Abstractions need a second implementation.** Add a port or interface only where something really varies (a real adapter and a test fake count).
+- **Inject collaborators, return results**, so behaviour is visible at the test entry point.
+
+## Domain language
+
+Names of modules, types, functions, routes, tests and UI labels use the terms of `$KB/GLOSSARY.md`. A concept with no glossary term is raised with the human, not named ad hoc.
+
 ## Safety
 
 - **Validate at trust boundaries.** Parse and validate all external input in `interfaces` (or the adapter in `data`) into typed values before it reaches `core`. Never trust input that has not been validated.
@@ -38,3 +49,4 @@ For a UI layer the same idea holds: components (interfaces) → state / services
 ## Decisions
 
 Any choice that is hard to reverse and not already fixed by `.ai/project/` needs a row in the owning spec's §2.4 Decisions **before** implementation. That covers: frameworks, new packages, new projects, datastores, protocols, message contracts, background jobs, sync vs. async, and caching.
+A decision that binds more than this spec and is costly to undo becomes a `Draft` decision record in `$KB/_decisions/`, linked from §2.4. Approved decision records are binding; changing one means a new decision record, raised with the human.

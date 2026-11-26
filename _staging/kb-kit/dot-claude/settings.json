@@ -27,7 +27,6 @@
       "Bash(npm publish:*)",
       "Bash(pnpm publish:*)",
       "Bash(yarn publish:*)",
-      "Bash(npm version:*)",
       "Bash(gh release create:*)",
       "Bash(gh pr merge:*)",
       "Read(**/.env)",
@@ -57,13 +56,20 @@
       "Edit(./.claude/settings.local.json)",
       "Edit(./.claude/hooks/**)",
       "Edit(./.ai/hooks/**)",
+      "Edit(./.gemini/settings.json)",
+      "Edit(./.cursor/**)",
+      "Edit(./.codex/**)",
+      "Edit(./opencode.json)",
       "Edit(./_kb/**)"
     ],
     "ask": [
       "Bash(npm install:*)",
       "Bash(npm i:*)",
       "Bash(npm add:*)",
+      "Bash(pnpm add:*)",
+      "Bash(yarn add:*)",
       "Bash(pip install:*)",
+      "Bash(pip3 install:*)",
       "Bash(dotnet add:*)"
     ]
   },

@@ -5,7 +5,7 @@ description: Scaffold a new spec of this layer in the KB inside its module folde
 
 # Skill: new-spec
 
-**Use when:** a request needs behavior that no existing spec of this layer owns (check `$KB/<INDEX>` and `$KB/MODULE-MAP.md` first; if a spec already owns it, amend that spec instead). If the request arrived as an SRS document, run `intake-requirement` first; its plan must be `Approved`.
+**Use when:** a request needs behavior that no existing spec of this layer owns (check `$KB/<INDEX>` and `$KB/MODULE-MAP.md` first; if a spec already owns it, amend that spec instead). If the request arrived as a PRD document, run `intake-requirement` first; its plan must be `Approved`.
 
 `$KB`, `<Layer>`, `<PREFIX>`, `<INDEX>`, `Consumes`: `.ai/ai.md` → intro. Specs are created **module-wise**: `$KB/<Module>/Implementation/<Layer>/NNN-slug/`, with ID `<PREFIX>-<Module>-NNN` and `NNN` numbered **per module and per layer**.
 
@@ -17,7 +17,7 @@ Example (backend layer, prefix `SPEC`): the first Billing spec is `$KB/Billing/I
    - A change that spans several modules gets **one spec per module**. The module that owns the shared contract or storage gets its own spec; the others depend on it (step 6).
    - A UI screen that mixes modules belongs to the module that owns the main record; list the other modules' provider specs in `<ProviderLayer> Specs`.
    - A spec that belongs to no single module (a baseline such as `<PREFIX>-001`) goes under `$KB/_cross-cutting/Implementation/<Layer>/NNN-slug/` with ID `<PREFIX>-NNN`. Use this only when no module fits, and say why in the spec.
-   - If the module has no folder in `$KB` yet, and it exists in this repo, create `$KB/<Module>/{SRS,Planning,Implementation/<Layer>}/` with that exact name (each with a `.gitkeep`) and add the module to *Modules* in `$KB/MODULE-MAP.md`. If it doesn't exist in any repo, stop and ask.
+   - If the module has no folder in `$KB` yet, and it exists in this repo, create `$KB/<Module>/{PRD,Planning,Implementation/<Layer>}/` with that exact name (each with a `.gitkeep`) and add the module to *Modules* in `$KB/MODULE-MAP.md`. If it doesn't exist in any repo, stop and ask.
 2. **Pick the next number in that module and layer:** the highest `NNN` among `$KB/<Module>/Implementation/<Layer>/[0-9][0-9][0-9]-*/`, plus 1; `001` if none. Never reuse a number, including those of deprecated specs.
    ```bash
    . .ai/kb.conf; KB="${SDD_KB:-$KB}"
@@ -32,7 +32,7 @@ Example (backend layer, prefix `SPEC`): the first Billing spec is `$KB/Billing/I
    ```
 5. **Fill the metadata:** `ID: <PREFIX>-<Module>-NNN`, Title, `Status: Draft`, `Version: 0.1.0`, Author, Owner, and today's date for Created and Last Updated. The heading is `# <PREFIX>-<Module>-NNN: <Title>`. Remove the `<ProviderLayer> Specs` row in a provider layer; keep and rename it (e.g. `Backend Specs`) in a consumer layer.
 6. **Link** (all links relative to the new spec folder; every spec folder is four levels below `$KB`, so links start with `../../../../`):
-   - `Requirements`: each requirement folder this spec implements, e.g. `[REQ-Billing-001](../../../../Billing/SRS/001-invoice-export/)`. Use `none` only for a baseline or a purely technical spec, and say why in §1.1.
+   - `Requirements`: each requirement folder this spec implements, e.g. `[REQ-Billing-001](../../../../Billing/PRD/001-invoice-export/)`. Use `none` only for a baseline or a purely technical spec, and say why in §1.1.
    - `Dependencies`: each spec **of this layer** this one builds on, e.g. `[SPEC-001](../../../../_cross-cutting/Implementation/Backend/001-core-system/spec.md)`, or `none`.
    - **Consumer layers:** `<ProviderLayer> Specs`: each provider spec whose §3 this spec consumes, e.g. `[SPEC-Billing-001](../../../../Billing/Implementation/Backend/001-invoice-export/spec.md)`, or `none` for a purely client-side change. Provider specs are **not** edited from here.
    - `Dependents`: `none` for a new spec. For **each** dependency of this layer, add a link back to the new spec in that spec's `Dependents` row (replace `none`), and a changelog entry there (PATCH bump: "Dependents: added <new ID>").

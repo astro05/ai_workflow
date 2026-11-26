@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Lints this repo's layer of the knowledge base (SRS folders, plans, this layer's specs, MODULE-MAP.md), where its specs live.
+# Lints this repo's layer of the knowledge base (PRD folders, plans, this layer's specs, MODULE-MAP.md), where its specs live.
 # The checks themselves are in $KB/_kb/scripts/validate-kb.sh, shared by every layer. Exits 1 on any error.
 # Usage: bash .ai/scripts/validate-specs.sh
 # KB location and layer: .ai/kb.conf (KB=..., LAYER=...); the environment variable SDD_KB overrides KB.

@@ -18,5 +18,7 @@
 - Native permission rules match command prefixes, not regexes, so agents translate each rule conservatively. Check the coverage report the agent gives you.
 - Globs starting with `**/` also match absolute paths, so the hook protects the repos' policies and settings too, and any other folder with the same layout (including copies of this kit). A human installs or edits those files.
 - The shell rules match the whole command text, including heredocs and quoted strings: a file whose content mentions a denied command has to be written with the editor tool, not the shell.
+- File protection covers the editor tools (by path) and the shell (rules `shell-write-protected`, `shell-copy-into-protected`, `shell-edit-requirements`). The shell rules recognise the usual ways to write, copy, move or delete a file (`>`, `tee`, `sed -i`, `cp`, `mv`, `rm`, `Set-Content`, `Out-File`, `Copy-Item`, `Remove-Item`, …); a determined script can still get around a pattern match, so treat them as guard rails, not a sandbox.
+- In Claude Code, reads of secrets are blocked by the native `Read(...)` rules in `.claude/settings.json`, not by the hook (a hook run on every read costs about a second with Windows PowerShell). When you change *Files: deny read*, change those rules too.
 - The backstop that catches every tool: CI running the validators, plus branch protection on your git host, so no agent can push to or merge into the main branch.
 - After you edit `policy.md`, tell the agent: `policy.md changed. Re-apply it to your tool's settings.`

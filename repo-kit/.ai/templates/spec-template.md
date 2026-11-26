@@ -18,7 +18,7 @@ Consumer layers: the contract with the provider layer comes from the specs in "<
 | Version | 0.1.0 |
 | Author | <name / handle> |
 | Owner | <who approves changes> |
-| Requirements | <links to the requirement folder(s) in $KB this spec implements, e.g. `[REQ-Billing-001](../../../../Billing/SRS/001-invoice-export/)`, or `none`> |
+| Requirements | <links to the requirement folder(s) in $KB this spec implements, e.g. `[REQ-Billing-001](../../../../Billing/PRD/001-invoice-export/)`, or `none`> |
 | Dependencies | <links to the specs of this layer this one builds on, e.g. `[SPEC-001](../../../../_cross-cutting/Implementation/Backend/001-core-system/spec.md)`, or `none`> |
 | Dependents | <links to the specs of this layer that depend on this one, or `none`> |
 | <ProviderLayer> Specs | <consumer layers only (rename, e.g. `Backend Specs`; delete this row in a provider layer): links to the provider specs whose §3 this spec consumes, e.g. `[SPEC-Billing-001](../../../../Billing/Implementation/Backend/001-invoice-export/spec.md)`, or `none`> |
@@ -92,7 +92,9 @@ sequenceDiagram
 | <service/lib> | <why> | <what happens when it's down> | <ms> |
 
 ### 2.4 Decisions
-<!-- Every hard-to-reverse choice not already fixed by .ai/project/. Rule 00 bans unrecorded architectural decisions. -->
+<!-- Every hard-to-reverse choice not already fixed by .ai/project/. Rule 00 bans unrecorded architectural decisions.
+     Respect the approved decision records in $KB/_decisions/ (cite them). A decision that reaches beyond this spec becomes a Draft decision record (rule 01 → Decisions); link it here. -->
+<!-- Use the terms of $KB/GLOSSARY.md throughout this spec. -->
 | # | Decision | Alternatives considered | Rationale |
 |---|---|---|---|
 | D1 | <decision> | <options> | <why this one> |
@@ -174,9 +176,20 @@ interface <Entity> {
 
 ## 5. Verification Matrix
 
+### Test entry points
+<!-- The few public entry points the ACs below are tested through (rule 01 → Module design), reusing existing ones.
+     Approving this spec confirms them. Keep the first column E<N> (the validator only reads rows starting with AC-). -->
+| # | Entry point | ACs | Notes |
+|---|---|---|---|
+| E1 | <e.g. `POST /api/v1/invoices`, `InvoiceExportService.export()`, `<InvoiceList>` with a fake API> | AC-01..AC-03 | <what it does not cover, if anything> |
+
+### Acceptance criteria
+
 > Every Goal (§1.2), Invariant (§4.1), Error code (§4.2), and Edge case (§4.3) is covered by at least one AC.
 > `Test Reference` = `<path relative to the repo root>::<test name or tag>`; the test carries the tag `<PREFIX>-<Module>-NNN-AC-NN` (how: `$KB/<INDEX>` → *Project paths* → `Test tag`). Required for every AC before Approval.
 > Status: `Pending` · `Verified` · `Failing`.
+
+> Each AC is tested at one of the test entry points above. ACs are built one at a time, red → green (rule 00, steps 2–3).
 
 | AC ID | Criterion (Given / When / Then) | Covers | Test Reference | Status |
 |---|---|---|---|---|

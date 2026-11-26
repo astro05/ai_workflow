@@ -15,5 +15,5 @@ description: Add a new module / feature folder (projects or folders, registratio
 2. **Create the module's folders / projects** exactly as the reference module has them: <list from architecture.md, e.g. contracts, domain, application, infrastructure, tests>.
 3. **Register it:** <the registration steps from architecture.md, e.g. a `Register<Feature>Services` method called from the composition root; route entries; solution / workspace entries>.
 4. **Add the entrypoints** the spec's §3.2 lists (controllers, routes, handlers, components), in the place architecture.md names.
-5. **KB:** if the module has no folder in `$KB` yet, create `$KB/<Module>/{SRS,Planning,Implementation/<Layer>}/` (with `.gitkeep`) and add it to *Modules* in `$KB/MODULE-MAP.md`.
+5. **KB:** if the module has no folder in `$KB` yet, create `$KB/<Module>/{PRD,Planning,Implementation/<Layer>}/` (with `.gitkeep`) and add it to *Modules* in `$KB/MODULE-MAP.md`.
 6. **Verify:** build and tests pass (`.ai/project/commands.md`); log the change in the spec's `changelog.md` (rule 00, loop step 5).

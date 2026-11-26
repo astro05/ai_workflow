@@ -9,7 +9,7 @@ Requirements, plans and specs are **not in this repo**. They live in the shared 
 
 ## 0. Install in a repo
 
-1. If the repo already has a `CLAUDE.md` or `AGENTS.md`, rename it to `CLAUDE.pre-sdd.md` / `AGENTS.pre-sdd.md` first (`init-project` moves its content into `.ai/project/`). Then copy `.ai/` (including `.ai/hooks/`, needed by every tool), `CLAUDE.md`, `AGENTS.md` and (for Claude Code) `.claude/` into the repo root. `CLAUDE.md` is loaded by Claude Code; `AGENTS.md` by Codex, Cursor, Copilot, OpenCode, Aider and others.
+1. If the repo already has a `CLAUDE.md` or `AGENTS.md`, rename it to `CLAUDE.pre-sdd.md` / `AGENTS.pre-sdd.md` first (`init-project` moves its content into `.ai/project/`). Then copy `.ai/`, `CLAUDE.md` and `AGENTS.md` into the repo root, plus the two folders the kit keeps under `_staging/repo-kit/` (the policy hook would block agents from writing them): `dot-ai/hooks/` → `.ai/hooks/` (needed by every tool) and, for Claude Code, `dot-claude/` → `.claude/`. See the kit's top-level `README.md`. `CLAUDE.md` is loaded by Claude Code; `AGENTS.md` by Codex, Cursor, Copilot, OpenCode, Aider and others.
 2. Put the KB next to the repo, or set the environment variable `SDD_KB` to its path. Set `KB` and `LAYER` in `.ai/kb.conf`; `LAYER` must have a row in `$KB/_kb/kb.conf`. Your AI tool must be allowed to read and write the KB: in Claude Code, `.claude/settings.json` → `permissions.additionalDirectories` (or `claude --add-dir <path>`); other tools need the equivalent "additional workspace folder" setting. Adjust the KB path in `CLAUDE.md` too.
 3. Claude Code's policy hook needs PowerShell: it runs `pwsh` (PowerShell 7) if installed, otherwise Windows PowerShell. On macOS/Linux install PowerShell 7; without it the hook blocks every tool call and says why.
 4. Review `.ai/hooks/policy.md`, which lists what agents may never do (git push, destructive DB commands, secrets, …), and adjust it for this repo. In its first session, the agent implements it in its own tool's settings and asks you to approve the diff.
@@ -40,11 +40,13 @@ To take one requirement through every layer in one session, start the tool in th
 
 | Want | Say |
 |---|---|
-| A new requirement arrived | Save it in `<KB>/<Module>/SRS/`, then: "Run `.ai/skills/intake-requirement/SKILL.md` for the new file in `<Module>/SRS/`". The agent writes the plan in `<KB>/<Module>/Planning/NNN-slug/plan.md`; answer its questions and set its `Status: Approved` before specs are drafted |
+| A new requirement arrived | Save it in `<KB>/<Module>/PRD/`, then: "Run `.ai/skills/intake-requirement/SKILL.md` for the new file in `<Module>/PRD/`". The agent writes the plan in `<KB>/<Module>/Planning/NNN-slug/plan.md`; answer its questions and set its `Status: Approved` before specs are drafted |
 | Turn an idea into a spec | "Act as `.ai/agents/spec-architect.md`. New spec for: <feature>" |
 | Scaffold a spec folder | "Run the skill `.ai/skills/new-spec/SKILL.md` for: <module>" |
-| Implement | "Act as `.ai/agents/core-engineer.md`. Implement <SPEC-ID> AC-01..AC-03" |
+| Implement | "Implement <SPEC-ID> AC-01..AC-03" (the agent alternates `test-engineer` and `core-engineer`, one AC per red → green cycle) |
 | Write tests | "Act as `.ai/agents/test-engineer.md` for <SPEC-ID>" |
+| Review a branch | "Run `.ai/skills/review-change/SKILL.md` since <branch or commit>" (Standards + Spec, reported separately) |
+| Fix a bug | "Run `.ai/skills/fix-bug/SKILL.md`: <symptom>" |
 | Check code vs. spec | "Run `.ai/skills/sync-spec/SKILL.md` on this branch" |
 | Check contracts | "Run `.ai/skills/verify-contract/SKILL.md` for <SPEC-ID>" |
 | Security review | "Act as `.ai/agents/security-auditor.md` and review this diff" |

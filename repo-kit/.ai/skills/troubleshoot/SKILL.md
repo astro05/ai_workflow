@@ -5,7 +5,7 @@ description: Where to look when building, running, testing, logging, database, m
 
 # Skill: troubleshoot
 
-**Use when:** debugging a local run, a build or test failure, or a runtime failure.
+**Use when:** debugging a local run, a build or test failure, or a runtime failure caused by the environment (setup, tools, config, services not running). When the code itself behaves wrongly (a bug, a flaky test, a regression, a slowdown), use `.ai/skills/fix-bug` instead.
 
 > Filled by init-project from the project's debugging docs and `.ai/project/commands.md`. Until then, use the generic steps below.
 

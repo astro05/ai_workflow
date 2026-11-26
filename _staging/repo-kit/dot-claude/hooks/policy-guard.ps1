@@ -9,6 +9,9 @@ $ErrorActionPreference = 'Stop'
 
 function Block([string]$msg) { [Console]::Error.WriteLine("Blocked by .ai/hooks/policy.md: $msg"); exit 2 }
 
+# Fail closed: any unexpected error blocks the tool call (exit 1 would let it through as a non-blocking error).
+trap { Block "the policy hook failed ($_); fix the hook or policy.md before continuing" }
+
 try {
     $payload = [Console]::In.ReadToEnd() | ConvertFrom-Json
 } catch { Block "hook could not parse its input ($_)" }
@@ -74,16 +77,20 @@ if ($tool -eq 'Bash' -or $tool -eq 'PowerShell') {
     exit 0
 }
 
-if ($tool -in @('Edit', 'Write', 'MultiEdit', 'NotebookEdit', 'Read')) {
+# Reads are not routed through this hook (it would add a PowerShell start-up to every read): "Files: deny read" is
+# enforced for reads by the native Read(...) deny rules in .claude/settings.json, and for writes here.
+if ($tool -in @('Edit', 'Write', 'MultiEdit', 'NotebookEdit')) {
     $path = [string]$(if ($in.file_path) { $in.file_path } else { $in.notebook_path })
     if (-not $path) { exit 0 }
     $full = [IO.Path]::GetFullPath($(if ([IO.Path]::IsPathRooted($path)) { $path } else { Join-Path $root $path }))
     $rootFull = [IO.Path]::GetFullPath($root).TrimEnd('\', '/')
-    $rel = if ($full.StartsWith($rootFull, [StringComparison]::OrdinalIgnoreCase)) { $full.Substring($rootFull.Length).TrimStart('\', '/') } else { $full }
+    $inside = $full.Equals($rootFull, [StringComparison]::OrdinalIgnoreCase) -or
+        $full.StartsWith($rootFull + '\', [StringComparison]::OrdinalIgnoreCase) -or
+        $full.StartsWith($rootFull + '/', [StringComparison]::OrdinalIgnoreCase)
+    $rel = if ($inside) { $full.Substring($rootFull.Length).TrimStart('\', '/') } else { $full }
     $rel = $rel -replace '\\', '/'
 
     if (Test-GlobList $sections['Files: deny read'] $rel) { Block "$rel is a secrets file (Files: deny read)" }
-    if ($tool -eq 'Read') { exit 0 }
 
     if (Test-GlobList $sections['Files: protect'] $rel) { Block "$rel is protected (Files: protect); a human edits it" }
     if ((Test-GlobList $sections['Files: no modify existing'] $rel) -and (Test-Path -LiteralPath $full)) {

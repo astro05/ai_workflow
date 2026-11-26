@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Lints the knowledge base: requirement folders (SRS), plans (Planning), the specs of every layer in _kb/kb.conf
+# Lints the knowledge base: requirement folders (PRD), plans (Planning), the specs of every layer in _kb/kb.conf
 # (metadata, mandatory sections, index registration and status drift, links, Verification Matrix) and MODULE-MAP.md
 # coverage. Exits 1 on any error.
 # Usage: bash _kb/scripts/validate-kb.sh [--layer <layer>|all] [--repo-root DIR]
@@ -66,6 +66,51 @@ field() {
   awk -F'|' -v k="$2" '{ gsub(/^[ \t]+|[ \t\r]+$/, "", $2) } $2 == k { v = $3; gsub(/^[ \t]+|[ \t\r]+$/, "", v); print v; exit }' "$1"
 }
 
+# Open questions (comma-separated IDs) in the section that starts with heading $2: table rows whose first cell is
+# Q-NN / QN and whose last cell (the answer) is empty, "open", "<open>" or TBD.
+open_questions() {
+  awk -v h="$2" '
+    index($0, h) == 1 { on = 1; next }
+    on && /^##/ { on = 0 }
+    on && /^\|[ \t]*Q-?[0-9]+[ \t]*\|/ {
+      n = split($0, c, "|"); a = c[n]; gsub(/^[ \t]+|[ \t\r]+$/, "", a)
+      if (a == "" && n > 2) { a = c[n - 1]; gsub(/^[ \t]+|[ \t\r]+$/, "", a) }
+      a = tolower(a)
+      if (a == "" || a == "open" || a == "<open>" || a ~ /^tbd/) { q = c[2]; gsub(/[ \t]/, "", q); printf "%s%s", sep, q; sep = "," }
+    }' "$1"
+}
+
+# Line numbers (comma-separated) still holding a template <placeholder>, outside code blocks, `code` spans and
+# HTML comments. A generic type such as List<Item> is not a placeholder (a letter or digit comes before the "<").
+placeholders() {
+  awk '
+    /^[ \t]*```/ { code = !code; next }
+    code { next }
+    {
+      line = $0
+      if (incom) { if (sub(/^.*-->/, "", line)) incom = 0; else next }
+      while (match(line, /<!--/)) {
+        pre = substr(line, 1, RSTART - 1); rest = substr(line, RSTART + 4)
+        if (match(rest, /-->/)) line = pre substr(rest, RSTART + 3); else { line = pre; incom = 1 }
+      }
+      gsub(/`[^`]*`/, "", line)
+      gsub(/<\/?(br|sup|sub|b|i|em|strong|kbd|details|summary|u|s)[ \/]*>/, "", line)
+      if (line ~ /(^|[^A-Za-z0-9_])<[A-Za-z][^<>]*>/) { printf "%s%d", sep, NR; sep = "," }
+    }' "$1"
+}
+
+# Errors for an Approved plan or spec that is not finished: TBD/TODO, template placeholders, open questions.
+check_finished() {
+  local file="$1" rel="$2" kind="$3" qheading="$4" lines
+  if grep -nE '\b(TBD|TODO)\b' "$file" >/dev/null; then
+    err "$rel" "Approved $kind still contains TBD/TODO (lines: $(grep -nE '\b(TBD|TODO)\b' "$file" | cut -d: -f1 | paste -sd, -))"
+  fi
+  lines="$(placeholders "$file")"
+  [ -z "$lines" ] || err "$rel" "Approved $kind still contains template <placeholders> (lines: $lines; put real text, or code in backticks)"
+  lines="$(open_questions "$file" "$qheading")"
+  [ -z "$lines" ] || err "$rel" "Approved $kind has unanswered questions under '$qheading' ($lines)"
+}
+
 # <prefix>-<Module>-NNN, or <prefix>-NNN for _cross-cutting.
 expected_id() { if [ "$2" = "$CROSS" ]; then echo "$1-$3"; else echo "$1-$2-$3"; fi; }
 
@@ -86,14 +131,17 @@ SECTIONS=(
 
 shopt -s nullglob
 
-# --- Requirements: <Module>/SRS/NNN-slug/README.md = REQ-<Module>-NNN -------------------------------------
+# --- Requirements: <Module>/PRD/NNN-slug/README.md = REQ-<Module>-NNN -------------------------------------
 REQS=" "
-for dir in "$KB"/*/SRS/[0-9][0-9][0-9]-*/; do
+for dir in "$KB"/*/PRD/[0-9][0-9][0-9]-*/; do
   dir="${dir%/}"
   rel="${dir#"$KB"/}"
   module="$(basename "$(dirname "$(dirname "$dir")")")"
   num="$(basename "$dir")"; num="${num%%-*}"
   expected="$(expected_id REQ "$module" "$num")"
+  if [[ "$REQS" == *" $expected "* ]]; then
+    err "$rel" "duplicate number: another folder in $module/PRD/ is also $expected (numbers are never reused; renumber this one to the next free number)"
+  fi
   REQS="$REQS$expected "
   if [ ! -f "$dir/README.md" ]; then
     err "$rel" "missing README.md (start from _kb/templates/requirement-template.md)"
@@ -106,8 +154,8 @@ for dir in "$KB"/*/SRS/[0-9][0-9][0-9]-*/; do
   echo "INFO   $rel: $expected"
 done
 
-# Requirement documents dropped straight into SRS/ are new requirements waiting for intake.
-for f in "$KB"/*/SRS/*; do
+# Requirement documents dropped straight into PRD/ are new requirements waiting for intake.
+for f in "$KB"/*/PRD/*; do
   name="$(basename "$f")"
   [ "$name" = .gitkeep ] && continue
   [[ -d "$f" && "$name" =~ ^[0-9]{3}- ]] && continue
@@ -121,7 +169,7 @@ for dir in "$KB"/*/Planning/[0-9][0-9][0-9]-*/; do
   module="$(basename "$(dirname "$(dirname "$dir")")")"
   num="$(basename "$dir")"; num="${num%%-*}"
   expected="$(expected_id REQ "$module" "$num")"
-  [ -d "$KB/$module/SRS/$(basename "$dir")" ] || err "$rel" "no requirement folder $module/SRS/$(basename "$dir")/ (a plan has the same folder name as its requirement)"
+  [ -d "$KB/$module/PRD/$(basename "$dir")" ] || err "$rel" "no requirement folder $module/PRD/$(basename "$dir")/ (a plan has the same folder name as its requirement)"
   plan="$dir/plan.md"
   [ -f "$plan" ] || { err "$rel" "missing plan.md (start from .ai/templates/plan-template.md)"; continue; }
   req="$(field "$plan" Requirement)"
@@ -131,9 +179,7 @@ for dir in "$KB"/*/Planning/[0-9][0-9][0-9]-*/; do
     Draft|Approved) ;;
     *) err "$rel" "invalid Status '$status' (Draft|Approved)" ;;
   esac
-  if [ "$status" = Approved ] && grep -nE '\b(TBD|TODO)\b' "$plan" >/dev/null; then
-    err "$rel" "Approved plan still contains TBD/TODO (lines: $(grep -nE '\b(TBD|TODO)\b' "$plan" | cut -d: -f1 | paste -sd, -))"
-  fi
+  [ "$status" != Approved ] || check_finished "$plan" "$rel" plan "## 6."
   echo "INFO   $rel: plan for $expected $status"
 done
 
@@ -163,7 +209,7 @@ validate_layer() {
     root=""
   fi
 
-  local dir
+  local dir seen=" "
   for dir in ${dirs[@]+"${dirs[@]}"}; do
     dir="${dir%/}"
     local rel="${dir#"$KB"/}" spec="$dir/spec.md"
@@ -182,6 +228,10 @@ validate_layer() {
     num="$(basename "$dir")"; num="${num%%-*}"
     expected="$(expected_id "$prefix" "$module" "$num")"
     [ "$id" = "$expected" ] || err "$rel" "ID '$id' does not match folder (expected $expected)"
+    if [[ "$seen" == *" $expected "* ]]; then
+      err "$rel" "duplicate number: another folder in $module/Implementation/$folder/ is also $expected (numbers are never reused; renumber this one to the next free number)"
+    fi
+    seen="$seen$expected "
     case "$status" in
       Draft|Approved|Deprecated) ;;
       *) err "$rel" "invalid Status '$status' (Draft|Approved|Deprecated)" ;;
@@ -192,14 +242,23 @@ validate_layer() {
       grep -qF -- "$s" "$spec" || err "$rel" "missing section '$s'"
     done
 
-    # Index registration and status drift.
-    local idx_status
-    idx_status="$(awk -F'|' -v id="$id" '{ for (i = 2; i <= NF; i++) gsub(/^[ \t]+|[ \t\r]+$/, "", $i) } $2 == id { print $4; exit }' "$index")"
-    if [ -z "$idx_status" ]; then
+    # Index registration and drift (Status, Version; Coverage is checked after the Verification Matrix).
+    local idx_row idx_status idx_version idx_coverage version
+    version="$(field "$spec" Version)"
+    idx_row="$(awk -F'|' -v id="$id" '{ for (i = 2; i <= NF; i++) gsub(/^[ \t]+|[ \t\r]+$/, "", $i) } $2 == id { print $4 "|" $5 "|" $6; exit }' "$index")"
+    IFS='|' read -r idx_status idx_version idx_coverage <<< "$idx_row"
+    if [ -z "$idx_row" ]; then
       err "$rel" "$id not registered in $(basename "$index")"
-    elif [ "$idx_status" != "$status" ]; then
-      err "$rel" "status drift: spec says '$status', $(basename "$index") says '$idx_status'"
+    else
+      [ "$idx_status" = "$status" ] || err "$rel" "status drift: spec says '$status', $(basename "$index") says '$idx_status'"
+      [ "$idx_version" = "$version" ] || err "$rel" "version drift: spec says '$version', $(basename "$index") says '$idx_version'"
     fi
+    # The spec's current version has a changelog row (every version bump is logged).
+    if [ -f "$dir/changelog.md" ] && [ -n "$version" ] &&
+       ! awk -F'|' -v v="$version" '{ gsub(/^[ \t]+|[ \t\r]+$/, "", $3) } $3 == v { f = 1 } END { exit !f }' "$dir/changelog.md"; then
+      err "$rel" "Version $version has no row in changelog.md"
+    fi
+    [ "$status" != Approved ] || check_finished "$spec" "$rel" spec "### 1.4"
     in_map "$id" || err "$rel" "$id missing from MODULE-MAP.md"
 
     # Link rows: every referenced ID exists, every markdown link resolves.
@@ -209,7 +268,7 @@ validate_layer() {
       [ -n "$val" ] || continue
       for ref in $(grep -oE "$ID_RE" <<< "$val" || true); do
         case "$ref" in
-          REQ-*) [[ "$REQS" == *" $ref "* ]] || err "$rel" "$f references $ref, which has no SRS folder" ;;
+          REQ-*) [[ "$REQS" == *" $ref "* ]] || err "$rel" "$f references $ref, which has no PRD folder" ;;
           *)
             ref_index="$(index_for_prefix "${ref%%-*}")"
             in_index "$ref_index" "$ref" || err "$rel" "$f references $ref, which is not registered in $(basename "$ref_index")" ;;
@@ -242,11 +301,13 @@ validate_layer() {
       elif [ -n "$root" ] && [ ! -e "$root/${ref%%::*}" ]; then
         if [ "$st" = Verified ]; then err "$rel" "$ac marked Verified but '${ref%%::*}' does not exist"
         else warn "$rel" "$ac test '${ref%%::*}' does not exist yet"; fi
+      elif [ -n "$root" ] && [ "$st" = Verified ] && ! grep -rqF -- "$id-$ac" "$root/${ref%%::*}"; then
+        err "$rel" "$ac marked Verified but '${ref%%::*}' has no test tagged $id-$ac"
       fi
     done <<< "$rows"
 
-    if [ "$status" = Approved ] && grep -nE '\b(TBD|TODO)\b' "$spec" >/dev/null; then
-      err "$rel" "Approved spec still contains TBD/TODO (lines: $(grep -nE '\b(TBD|TODO)\b' "$spec" | cut -d: -f1 | paste -sd, -))"
+    if [ -n "$idx_row" ] && [ "$(trim "$idx_coverage")" != "$verified/$total" ]; then
+      err "$rel" "coverage drift: Verification Matrix gives $verified/$total, $(basename "$index") says '$idx_coverage'"
     fi
 
     echo "INFO   $rel: $id $status coverage $verified/$total"
